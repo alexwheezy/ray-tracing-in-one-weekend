@@ -1,5 +1,5 @@
 use std::fmt::Display;
-use std::ops::{Add, AddAssign, DivAssign, Mul, MulAssign, Neg, Sub};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub};
 use std::ops::{Index, IndexMut};
 
 // Point3 is just an alias for vec3, but useful for geometric clarity in the code.
@@ -97,30 +97,57 @@ impl Display for Vec3 {
     }
 }
 
-impl Add<Vec3> for Vec3 {
+impl<'a> Add<&'a Vec3> for &'a Vec3 {
     type Output = Vec3;
-    fn add(self, rhs: Self) -> Self::Output {
-        Vec3::new(self[0] + rhs[0], self[1] + rhs[1], self[2] + rhs[2])
+    fn add(self, rhs: &'a Vec3) -> Self::Output {
+        Self::Output::new(self[0] + rhs[0], self[1] + rhs[1], self[2] + rhs[2])
     }
 }
 
-impl Sub<Vec3> for Vec3 {
+impl<'a> Sub<&'a Vec3> for &'a Vec3 {
     type Output = Vec3;
-    fn sub(self, rhs: Self) -> Self::Output {
-        Vec3::new(self[0] - rhs[0], self[1] - rhs[1], self[2] - rhs[2])
+    fn sub(self, rhs: &'a Vec3) -> Self::Output {
+        Self::Output::new(self[0] - rhs[0], self[1] - rhs[1], self[2] - rhs[2])
     }
 }
 
-impl Mul<Vec3> for Vec3 {
+impl<'a> Mul<&'a Vec3> for &'a Vec3 {
     type Output = Vec3;
-    fn mul(self, rhs: Self) -> Self::Output {
-        Vec3::new(self[0] * rhs[0], self[1] * rhs[1], self[2] * rhs[2])
+    fn mul(self, rhs: &'a Vec3) -> Self::Output {
+        Self::Output::new(self[0] * rhs[0], self[1] * rhs[1], self[2] * rhs[2])
     }
 }
 
-impl Mul<f32> for Vec3 {
+impl<'a> Mul<f32> for &'a Vec3 {
     type Output = Vec3;
     fn mul(self, rhs: f32) -> Self::Output {
-        Vec3::new(self[0] * rhs, self[1] * rhs, self[2] * rhs)
+        Self::Output::new(self[0] * rhs, self[1] * rhs, self[2] * rhs)
     }
+}
+
+impl<'a> Div<f32> for &'a Vec3 {
+    type Output = Vec3;
+    fn div(self, rhs: f32) -> Self::Output {
+        Self::Output::new(
+            self[0] * 1.0 / rhs,
+            self[1] * 1.0 / rhs,
+            self[2] * 1.0 / rhs,
+        )
+    }
+}
+
+pub fn dot(lhs: &Vec3, rhs: &Vec3) -> f32 {
+    lhs[0] * rhs[0] + lhs[1] * rhs[1] + lhs[2] * rhs[2]
+}
+
+pub fn cross(lhs: &Vec3, rhs: &Vec3) -> Vec3 {
+    Vec3::new(
+        lhs[1] * rhs[2] - lhs[2] * rhs[1],
+        lhs[2] * rhs[0] - lhs[0] * rhs[2],
+        lhs[0] * rhs[1] - lhs[1] * rhs[0],
+    )
+}
+
+pub fn unit_vector(v: &Vec3) -> Vec3 {
+    v / v.length()
 }
