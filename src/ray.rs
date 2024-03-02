@@ -9,8 +9,8 @@ impl Ray {
     #[inline]
     pub fn new(orig: &Point3, dir: &Vec3) -> Self {
         Self {
-            orig: orig.clone(),
-            dir: dir.clone(),
+            orig: *orig,
+            dir: *dir,
         }
     }
 
@@ -26,7 +26,7 @@ impl Ray {
 
     #[inline]
     pub fn at(&self, t: f32) -> Point3 {
-        let point = &self.orig + &(&self.dir * t);
+        let point = self.orig + self.dir * t;
         Point3::with_vec(&point)
     }
 }
