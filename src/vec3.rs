@@ -5,35 +5,33 @@ use std::ops::{Index, IndexMut};
 // Point3 is just an alias for vec3, but useful for geometric clarity in the code.
 pub type Point3 = Vec3;
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Copy)]
 pub struct Vec3 {
-    data: Vec<f32>,
+    x: f32,
+    y: f32,
+    z: f32,
 }
 
 impl Vec3 {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
-        Self {
-            data: vec![x, y, z],
-        }
+        Self { x, y, z }
     }
 
     pub fn with_vec(vec: &Vec3) -> Self {
-        Self {
-            data: vec.data.clone(),
-        }
+        Self { ..*vec }
     }
 
     #[inline]
     pub fn x(&self) -> f32 {
-        self[0]
+        self.x
     }
     #[inline]
     pub fn y(&self) -> f32 {
-        self[1]
+        self.y
     }
     #[inline]
     pub fn z(&self) -> f32 {
-        self[2]
+        self.z
     }
 
     #[inline]
@@ -43,55 +41,60 @@ impl Vec3 {
 
     #[inline]
     pub fn length_squared(&self) -> f32 {
-        self.data.iter().fold(0.0, |acc, x| acc + x * x)
+        self.x * self.x + self.y * self.y + self.z * self.z
     }
 }
 
 impl Neg for Vec3 {
     type Output = Self;
     fn neg(self) -> Self::Output {
-        Self {
-            data: vec![-self[0], -self[1], -self[2]],
-        }
+        Self::new(-self.x, -self.y, -self.z)
     }
 }
 
 impl AddAssign for Vec3 {
     fn add_assign(&mut self, rhs: Self) {
-        self[0] += rhs[0];
-        self[1] += rhs[1];
-        self[2] += rhs[2];
+        self.x += rhs.x;
+        self.y += rhs.y;
+        self.z += rhs.z;
     }
 }
 
 impl MulAssign<f32> for Vec3 {
     fn mul_assign(&mut self, rhs: f32) {
-        self.data.iter_mut().for_each(|x| *x *= rhs);
+        self.x *= rhs;
+        self.y *= rhs;
+        self.z *= rhs;
     }
 }
 impl DivAssign<f32> for Vec3 {
     fn div_assign(&mut self, rhs: f32) {
-        self.data.iter_mut().for_each(|x| *x /= rhs);
+        self.x /= rhs;
+        self.y /= rhs;
+        self.z /= rhs;
     }
 }
 
 impl Index<usize> for Vec3 {
     type Output = f32;
     fn index(&self, index: usize) -> &Self::Output {
-        self.data.index(index)
-    }
-}
-
-impl Index<usize> for &Vec3 {
-    type Output = f32;
-    fn index(&self, index: usize) -> &Self::Output {
-        self.data.index(index)
+        match index {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => panic!("Index out of bounds: {}", index),
+        }
     }
 }
 
 impl IndexMut<usize> for Vec3 {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        self.data.index_mut(index)
+        match index {
+            0 => &mut self.x,
+            1 => &mut self.y,
+            2 => &mut self.z,
+            _ => panic!("Index out of bounds: {}", index),
+        }
     }
 }
 
@@ -103,35 +106,42 @@ impl Display for Vec3 {
     }
 }
 
-impl<'a> Add<&'a Vec3> for &'a Vec3 {
+impl Add<Vec3> for Vec3 {
     type Output = Vec3;
-    fn add(self, rhs: &'a Vec3) -> Self::Output {
+    fn add(self, rhs: Vec3) -> Self::Output {
         Self::Output::new(self[0] + rhs[0], self[1] + rhs[1], self[2] + rhs[2])
     }
 }
 
-impl<'a> Sub<&'a Vec3> for &'a Vec3 {
+impl Sub<Vec3> for Vec3 {
     type Output = Vec3;
-    fn sub(self, rhs: &'a Vec3) -> Self::Output {
+    fn sub(self, rhs: Vec3) -> Self::Output {
         Self::Output::new(self[0] - rhs[0], self[1] - rhs[1], self[2] - rhs[2])
     }
 }
 
-impl<'a> Mul<&'a Vec3> for &'a Vec3 {
+impl Mul<Vec3> for Vec3 {
     type Output = Vec3;
-    fn mul(self, rhs: &'a Vec3) -> Self::Output {
+    fn mul(self, rhs: Vec3) -> Self::Output {
         Self::Output::new(self[0] * rhs[0], self[1] * rhs[1], self[2] * rhs[2])
     }
 }
 
-impl<'a> Mul<f32> for &'a Vec3 {
+impl Mul<f32> for Vec3 {
     type Output = Vec3;
     fn mul(self, rhs: f32) -> Self::Output {
         Self::Output::new(self[0] * rhs, self[1] * rhs, self[2] * rhs)
     }
 }
 
-impl<'a> Div<f32> for &'a Vec3 {
+impl Mul<Vec3> for f32 {
+    type Output = Vec3;
+    fn mul(self, rhs: Vec3) -> Self::Output {
+        Self::Output::new(self * rhs[0], self * rhs[1], self * rhs[2])
+    }
+}
+
+impl Div<f32> for Vec3 {
     type Output = Vec3;
     fn div(self, rhs: f32) -> Self::Output {
         Self::Output::new(
@@ -155,5 +165,5 @@ pub fn cross(lhs: &Vec3, rhs: &Vec3) -> Vec3 {
 }
 
 pub fn unit_vector(v: &Vec3) -> Vec3 {
-    v / v.length()
+    *v / v.length()
 }
