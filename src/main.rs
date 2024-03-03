@@ -5,7 +5,21 @@ use log::info;
 
 use ray_tracing_in_one_weekend::{color, ray, vec3};
 
+fn hit_sphere(center: &vec3::Point3, radius: f32, r: &ray::Ray) -> bool {
+    let oc = *r.origin() - *center;
+    let a = vec3::dot(r.direction(), r.direction());
+    let b = 2.0 * vec3::dot(&oc, r.direction());
+    let c = vec3::dot(&oc, &oc) - radius * radius;
+    let discriminant = b * b - 4.0 * a * c;
+    discriminant >= 0.0
+}
+
 fn ray_color(r: &ray::Ray) -> color::Color {
+    if hit_sphere(&vec3::Point3::new(0.0, 0.0, -1.0), 0.5, r) {
+        info!("hit sphere");
+        return color::Color::new(1.0, 0.0, 0.0);
+    }
+
     let unit_direction = vec3::unit_vector(r.direction());
     let a = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - a) * color::Color::new(1.0, 1.0, 1.0) + a * color::Color::new(0.5, 0.7, 1.0)
@@ -63,4 +77,20 @@ fn main() {
         }
     }
     info!(" \rDone.                 \n");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_hit_sphere() {
+        let center = vec3::Point3::new(0.0, 0.0, -1.0);
+        let radius = 0.5;
+        let ray = ray::Ray::new(
+            &vec3::Point3::new(0.0, 0.0, 0.0),
+            &vec3::Vec3::new(0.0, 0.0, 1.0),
+        );
+        assert!(hit_sphere(&center, radius, &ray));
+    }
 }
