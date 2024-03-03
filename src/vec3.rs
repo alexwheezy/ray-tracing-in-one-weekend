@@ -5,7 +5,7 @@ use std::ops::{Index, IndexMut};
 // Point3 is just an alias for vec3, but useful for geometric clarity in the code.
 pub type Point3 = Vec3;
 
-#[derive(Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Vec3 {
     x: f32,
     y: f32,
@@ -141,6 +141,13 @@ impl Mul<Vec3> for f32 {
     }
 }
 
+impl Div<Vec3> for Vec3 {
+    type Output = Vec3;
+    fn div(self, rhs: Vec3) -> Self::Output {
+        Self::Output::new(self[0] / rhs[0], self[1] / rhs[1], self[2] / rhs[2])
+    }
+}
+
 impl Div<f32> for Vec3 {
     type Output = Vec3;
     fn div(self, rhs: f32) -> Self::Output {
@@ -166,4 +173,93 @@ pub fn cross(lhs: &Vec3, rhs: &Vec3) -> Vec3 {
 
 pub fn unit_vector(v: &Vec3) -> Vec3 {
     *v / v.length()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_base_method() {
+        let v = Vec3::new(1.0, 2.0, 3.0);
+        assert_eq!(v.length(), 3.7416575);
+        assert_eq!(v.length_squared(), 14.0);
+        assert_eq!(unit_vector(&v), v / 3.7416575);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_invalid_index() {
+        let v = Vec3::new(1.0, 2.0, 3.0);
+        panic!("{}", v[3]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_invalid_index_mut() {
+        let mut v = Vec3::new(1.0, 2.0, 3.0);
+        v[3] = 4.0;
+    }
+
+    #[test]
+    fn test_add_vec() {
+        let v1 = Vec3::new(1.0, 2.0, 3.0);
+        let v2 = Vec3::new(4.0, 5.0, 6.0);
+        assert_eq!(v1 + v2, Vec3::new(5.0, 7.0, 9.0));
+    }
+
+    #[test]
+    fn test_sub_vec() {
+        let v1 = Vec3::new(1.0, 2.0, 3.0);
+        let v2 = Vec3::new(4.0, 5.0, 6.0);
+        assert_eq!(v1 - v2, Vec3::new(-3.0, -3.0, -3.0));
+    }
+
+    #[test]
+    fn test_mul_vec() {
+        let v1 = Vec3::new(1.0, 2.0, 3.0);
+        let v2 = Vec3::new(4.0, 5.0, 6.0);
+        assert_eq!(v1 * v2, Vec3::new(4.0, 10.0, 18.0));
+    }
+
+    #[test]
+    fn test_mul_f32() {
+        let v = Vec3::new(1.0, 2.0, 3.0);
+        assert_eq!(v * 2.0, Vec3::new(2.0, 4.0, 6.0));
+    }
+
+    #[test]
+    fn test_div_vec() {
+        let v1 = Vec3::new(1.0, 2.0, 3.0);
+        let v2 = Vec3::new(4.0, 5.0, 6.0);
+        assert_eq!(v1 / v2, Vec3::new(0.25, 0.4, 0.5));
+    }
+
+    #[test]
+    fn test_div_f32() {
+        let v = Vec3::new(1.0, 2.0, 3.0);
+        assert_eq!(v / 2.0, Vec3::new(0.5, 1.0, 1.5));
+    }
+
+    #[test]
+    fn test_dot_vec() {
+        let v1 = Vec3::new(1.0, 2.0, 3.0);
+        let v2 = Vec3::new(4.0, 5.0, 6.0);
+        assert_eq!(dot(&v1, &v2), 32.0);
+
+        let v1 = Vec3::new(-1.0, 0.0, -1.0);
+        let v2 = Vec3::new(1.0, -2.0, 1.0);
+        assert_eq!(dot(&v1, &v2), -2.0);
+    }
+
+    #[test]
+    fn test_cross_vec() {
+        let v1 = Vec3::new(1.0, 2.0, 3.0);
+        let v2 = Vec3::new(4.0, 5.0, 6.0);
+        assert_eq!(cross(&v1, &v2), Vec3::new(-3.0, 6.0, -3.0));
+
+        let v1 = Vec3::new(-1.0, 0.0, -1.0);
+        let v2 = Vec3::new(1.0, -2.0, 1.0);
+        assert_eq!(cross(&v1, &v2), Vec3::new(-2.0, 0.0, 2.0));
+    }
 }
