@@ -30,10 +30,11 @@ fn main() {
 
     // Image
     let aspect_ratio = 16.0 / 9.0;
-    // FIX: Reverse the height and width of the image
-    let image_height = 400;
-    let image_width = {
-        let size = (image_height as f32 / aspect_ratio) as i32;
+    let image_width = 400;
+
+    // Calculate the image height, and ensure that it's at least 1.
+    let image_height = {
+        let size = (image_width as f32 / aspect_ratio) as i32;
         if size < 1 {
             1
         } else {
@@ -52,10 +53,11 @@ fn main() {
     let viewport_v = vec3::Vec3::new(0.0, -viewport_height, 0.0);
 
     // Calculate the horizontal and vertical delta vectors from pixel to pixel.
-    let pixel_delta_u = viewport_u / image_width as f32;
+    let pixel_delta_u = aspect_ratio * viewport_u / image_width as f32;
     let pixel_delta_v = viewport_v / image_height as f32;
 
     // Calculate the location of the upper left pixel.
+    // FIX: Why is the sphere off-cente?
     let viewport_upper_left = camera_center
         - vec3::Vec3::new(0.0, 0.0, focal_length)
         - viewport_u / 2.0
@@ -63,7 +65,7 @@ fn main() {
     let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
     // Render
-    println!("P3\n{} {}\n255", image_height, image_width);
+    println!("P3\n{} {}\n255", image_width, image_height);
 
     for j in 0..image_height {
         info!("Scanlines remaining: {}", image_height - j);
