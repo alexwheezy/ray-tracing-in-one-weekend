@@ -4,11 +4,13 @@
 use log::info;
 use std::rc::Rc;
 
-use ray_tracing_in_one_weekend::{color, hittable, hittable_list, ray, rtweekend::*, vec3};
+use ray_tracing_in_one_weekend::{
+    color, hittable, hittable_list, interval, ray, rtweekend::*, vec3,
+};
 
 fn ray_color(r: &ray::Ray, world: &impl hittable::Hittable) -> color::Color {
     let mut rec = hittable::HitRecord::default();
-    if world.hit(r, 0.0, INFINITY, &mut rec) {
+    if world.hit(r, interval::Interval::new(0.0, INFINITY), &mut rec) {
         return 0.5 * (rec.normal + color::Color::new(1.0, 1.0, 1.0));
     }
 
