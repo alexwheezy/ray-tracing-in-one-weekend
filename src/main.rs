@@ -2,27 +2,14 @@
 #![allow(unused)]
 
 use log::info;
+use std::rc::Rc;
 
-use ray_tracing_in_one_weekend::{color, ray, vec3};
+use ray_tracing_in_one_weekend::{color, hittable, hittable_list, ray, rtweekend::*, vec3};
 
-fn hit_sphere(center: &vec3::Point3, radius: f32, r: &ray::Ray) -> f32 {
-    let oc = *r.origin() - *center;
-    let a = r.direction().length_squared();
-    let half_b = vec3::dot(&oc, r.direction());
-    let c = oc.length_squared() - (radius * radius);
-    let discriminant = (half_b * half_b) - a * c;
-    if discriminant < 0.0 {
-        return -1.0;
-    }
-    (-half_b - discriminant.sqrt()) / a
-}
-
-fn ray_color(r: &ray::Ray) -> color::Color {
-    let t = hit_sphere(&vec3::Point3::new(0.0, 0.0, -1.0), 0.5, r);
-    if t > 0.0 {
-        info!("hit sphere");
-        let n = vec3::unit_vector(&(r.at(t) - vec3::Point3::new(0.0, 0.0, -1.0)));
-        return 0.5 * color::Color::new(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0);
+fn ray_color(r: &ray::Ray, world: &impl hittable::Hittable) -> color::Color {
+    let mut rec = hittable::HitRecord::default();
+    if world.hit(r, 0.0, INFINITY, &mut rec) {
+        return 0.5 * (rec.normal + color::Color::new(1.0, 1.0, 1.0));
     }
 
     let unit_direction = vec3::unit_vector(r.direction());
@@ -46,6 +33,17 @@ fn main() {
             size
         }
     };
+
+    // World
+    let mut world = hittable_list::HittableList::default();
+    world.add(Rc::new(hittable::Sphere::new(
+        vec3::Point3::new(0.0, 0.0, -1.0),
+        0.5,
+    )));
+    world.add(Rc::new(hittable::Sphere::new(
+        vec3::Point3::new(0.0, -100.5, -1.0),
+        100.0,
+    )));
 
     // Camera
     let focal_length: f32 = 1.0;
@@ -79,25 +77,9 @@ fn main() {
                 pixel00_loc + (i as f32 * pixel_delta_u) + (j as f32 * pixel_delta_v);
             let ray_direction = pixel_center - camera_center;
             let ray = ray::Ray::new(&camera_center, &ray_direction);
-            let pixel_color = ray_color(&ray);
+            let pixel_color = ray_color(&ray, &world);
             color::write_color(pixel_color);
         }
     }
     info!(" \rDone.                 \n");
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_hit_sphere() {
-        let center = vec3::Point3::new(0.0, 0.0, -1.0);
-        let radius = 0.5;
-        let ray = ray::Ray::new(
-            &vec3::Point3::new(0.0, 0.0, 0.0),
-            &vec3::Vec3::new(0.0, 0.0, 1.0),
-        );
-        assert_eq!(hit_sphere(&center, radius, &ray), -2.5);
-    }
 }
