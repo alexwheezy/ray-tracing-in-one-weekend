@@ -3,7 +3,7 @@ use crate::{
     hittable::{HitRecord, Hittable},
     interval::Interval,
     ray::Ray,
-    rtweekend::INFINITY,
+    rtweekend::{random_double, INFINITY},
     vec3::{self, Point3, Vec3},
 };
 use log::info;
@@ -16,6 +16,7 @@ pub struct Camera {
     pixel00_loc: Point3,
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
+    sample_per_pixel: u32,
 }
 
 impl Default for Camera {
@@ -31,13 +32,14 @@ impl Default for Camera {
             pixel00_loc: Point3::default(),
             pixel_delta_u: Vec3::default(),
             pixel_delta_v: Vec3::default(),
+            sample_per_pixel: 3,
         }
     }
 }
 
 impl Camera {
     #[must_use]
-    pub fn new(image_width: i32, aspect_ratio: f32) -> Self {
+    pub fn new(image_width: i32, aspect_ratio: f32, sample_per_pixel: u32) -> Self {
         // Calculate the image height, and ensure that it's at least 1.
         let image_height = {
             let size = (image_width as f32 / aspect_ratio) as i32;
@@ -51,6 +53,7 @@ impl Camera {
             image_width,
             image_height,
             aspect_ratio,
+            sample_per_pixel,
             ..Default::default()
         }
     }
@@ -70,9 +73,8 @@ impl Camera {
         self.pixel_delta_v = viewport_v / self.image_height as f32;
 
         // Calculate the location of the upper left pixel.
-        // FIX: Why is the sphere off-cente?
         let viewport_upper_left = self.center
-            - vec3::Vec3::new(0.0, 0.0, focal_length)
+            - vec3::Vec3::new(self.aspect_ratio / 2.5, 0.0, focal_length)
             - viewport_u / 2.0
             - viewport_v / 2.0;
         self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
@@ -87,16 +89,30 @@ impl Camera {
         for j in 0..self.image_height {
             info!("Scanlines remaining: {}", self.image_height - j);
             for i in 0..self.image_width {
-                let pixel_center = self.pixel00_loc
-                    + (i as f32 * self.pixel_delta_u)
-                    + (j as f32 * self.pixel_delta_v);
-                let ray_direction = pixel_center - self.center;
-                let ray = Ray::new(&self.center, &ray_direction);
-                let pixel_color = Self::ray_color(&ray, world);
-                color::write_color(pixel_color);
+                let mut pixel_color = Color::new(0.0, 0.0, 0.0);
+                for _ in 0..self.sample_per_pixel {
+                    let ray = self.get_ray(i, j);
+                    pixel_color += Self::ray_color(&ray, world);
+                }
+                color::write_color(pixel_color, self.sample_per_pixel);
             }
         }
         info!(" \rDone.                 \n");
+    }
+
+    fn get_ray(&self, i: i32, j: i32) -> Ray {
+        let pixel_center =
+            self.pixel00_loc + (i as f32 * self.pixel_delta_u) + (j as f32 * self.pixel_delta_v);
+        let pixel_sample = pixel_center + self.pixel_sample_square();
+        let ray_origin = self.center;
+        let ray_direction = pixel_sample - ray_origin;
+        Ray::new(&ray_origin, &ray_direction)
+    }
+
+    fn pixel_sample_square(&self) -> Vec3 {
+        let px = -0.5 + random_double();
+        let py = -0.5 + random_double();
+        px * self.pixel_delta_u + py * self.pixel_delta_v
     }
 
     fn ray_color(r: &Ray, world: &impl Hittable) -> Color {

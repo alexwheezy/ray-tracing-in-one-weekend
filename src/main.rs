@@ -1,32 +1,30 @@
-#![allow(dead_code)]
-#![allow(unused)]
+use ray_tracing_in_one_weekend::{camera, hittable, hittable_list::HittableList, vec3::Point3};
 
-use log::info;
 use std::rc::Rc;
-
-use ray_tracing_in_one_weekend::{
-    camera::Camera, color, hittable, hittable_list, interval, ray, rtweekend::*, vec3,
-};
 
 fn main() {
     env_logger::init();
 
     // World
-    let mut world = hittable_list::HittableList::default();
+    let mut world = HittableList::default();
     world.add(Rc::new(hittable::Sphere::new(
-        vec3::Point3::new(0.0, 0.0, -1.0),
+        Point3::new(0.0, 0.0, -1.0),
         0.5,
     )));
     world.add(Rc::new(hittable::Sphere::new(
-        vec3::Point3::new(0.0, -100.5, -1.0),
+        Point3::new(0.0, -100.5, -1.0),
         100.0,
     )));
 
     // Image
+    // Ratio of image width over height
     let aspect_ratio = 16.0 / 9.0;
+    // Rendered image width in pixel count
     let image_width = 400;
+    // Count of random samples for each pixel
+    let sample_per_pixel = 10;
 
     // Render
-    let mut cam = Camera::new(image_width, aspect_ratio);
+    let mut cam = camera::Camera::new(image_width, aspect_ratio, sample_per_pixel);
     cam.render(&world);
 }
