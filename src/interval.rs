@@ -19,18 +19,22 @@ impl Interval {
         Self { min, max }
     }
 
+    #[inline]
     pub fn contains(&self, x: f32) -> bool {
         self.min <= x && x <= self.max
     }
 
+    #[inline]
     pub fn surrounds(&self, x: f32) -> bool {
         self.min < x && x < self.max
     }
 
+    #[inline]
     pub fn empty() -> Self {
         Self::new(INFINITY, -INFINITY)
     }
 
+    #[inline]
     pub fn universe() -> Self {
         Self::new(-INFINITY, INFINITY)
     }

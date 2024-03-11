@@ -7,7 +7,6 @@ pub struct Ray {
 }
 
 impl Ray {
-    #[inline]
     pub fn new(orig: &Point3, dir: &Vec3) -> Self {
         Self {
             orig: *orig,

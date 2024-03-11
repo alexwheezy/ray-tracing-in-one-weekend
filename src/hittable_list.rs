@@ -14,14 +14,17 @@ impl HittableList {
         Self { objects: vec![] }
     }
 
+    #[inline]
     pub fn with_object(&mut self, object: Rc<dyn Hittable>) {
         self.add(object);
     }
 
+    #[inline]
     pub fn add(&mut self, object: Rc<dyn Hittable>) {
         self.objects.push(object);
     }
 
+    #[inline]
     pub fn clear(&mut self) {
         self.objects.clear();
     }
