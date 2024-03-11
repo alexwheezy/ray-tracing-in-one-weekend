@@ -22,9 +22,11 @@ fn main() {
     // Rendered image width in pixel count
     let image_width = 400;
     // Count of random samples for each pixel
-    let sample_per_pixel = 10;
+    let sample_per_pixel = 30;
+    // Maximum number of ray bounces into scene
+    let max_depth = 50;
 
     // Render
-    let mut cam = camera::Camera::new(image_width, aspect_ratio, sample_per_pixel);
+    let mut cam = camera::Camera::new(image_width, aspect_ratio, sample_per_pixel, max_depth);
     cam.render(&world);
 }

@@ -31,11 +31,7 @@ impl Interval {
 
     #[inline]
     pub fn clamp(&self, x: f32) -> f32 {
-        match x {
-            x if x < self.min => self.min,
-            x if x > self.max => self.max,
-            _ => x,
-        }
+        self.min.max(self.max.min(x))
     }
 
     #[inline]

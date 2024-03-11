@@ -2,6 +2,8 @@ use std::fmt::Display;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub};
 use std::ops::{Index, IndexMut};
 
+use crate::rtweekend;
+
 // Point3 is just an alias for vec3, but useful for geometric clarity in the code.
 pub type Point3 = Vec3;
 
@@ -42,6 +44,24 @@ impl Vec3 {
     #[inline]
     pub fn length_squared(&self) -> f32 {
         self.x * self.x + self.y * self.y + self.z * self.z
+    }
+
+    #[inline]
+    pub fn random_vector() -> Vec3 {
+        Vec3::new(
+            rtweekend::random_double(),
+            rtweekend::random_double(),
+            rtweekend::random_double(),
+        )
+    }
+
+    #[inline]
+    pub fn random_vector_range(min: f32, max: f32) -> Vec3 {
+        Vec3::new(
+            rtweekend::random_double_range(min, max),
+            rtweekend::random_double_range(min, max),
+            rtweekend::random_double_range(min, max),
+        )
     }
 }
 
@@ -173,6 +193,28 @@ pub fn cross(lhs: &Vec3, rhs: &Vec3) -> Vec3 {
 
 pub fn unit_vector(v: &Vec3) -> Vec3 {
     *v / v.length()
+}
+
+pub fn random_in_unit_sphere() -> Vec3 {
+    loop {
+        let p = Vec3::random_vector_range(-1.0, 1.0);
+        if p.length_squared() < 1.0 {
+            return p;
+        }
+    }
+}
+
+pub fn random_unit_vector() -> Vec3 {
+    unit_vector(&random_in_unit_sphere())
+}
+
+pub fn random_on_hemisphere(normal: &Vec3) -> Vec3 {
+    let in_unit_sphere = random_unit_vector();
+    if dot(&in_unit_sphere, normal) > 0.0 {
+        in_unit_sphere
+    } else {
+        -in_unit_sphere
+    }
 }
 
 #[cfg(test)]
