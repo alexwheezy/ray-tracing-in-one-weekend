@@ -10,6 +10,10 @@ pub fn write_color(pixel_color: Color, samples_per_pixel: u32) {
     g *= scale;
     b *= scale;
 
+    r = linear_to_gamma(r);
+    g = linear_to_gamma(g);
+    b = linear_to_gamma(b);
+
     // Write the translated [0,255] value of each color component.
     let intensity = Interval::new(0.0, 0.999);
     println!(
@@ -18,4 +22,9 @@ pub fn write_color(pixel_color: Color, samples_per_pixel: u32) {
         (256.0 * intensity.clamp(g)) as i32,
         (256.0 * intensity.clamp(b)) as i32
     );
+}
+
+#[inline]
+pub fn linear_to_gamma(linear_component: f32) -> f32 {
+    linear_component.sqrt()
 }
