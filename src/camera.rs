@@ -4,7 +4,7 @@ use crate::{
     interval::Interval,
     ray::Ray,
     rtweekend::{random_double, INFINITY},
-    vec3::{self, random_on_hemisphere, Point3, Vec3},
+    vec3::{self, Point3, Vec3},
 };
 use log::info;
 
@@ -125,9 +125,19 @@ impl Camera {
         if depth == 0 {
             return Color::new(0.0, 0.0, 0.0);
         }
+
         if world.hit(r, Interval::new(0.001, INFINITY), &mut rec) {
-            let direction = random_on_hemisphere(&rec.normal);
-            return 0.5 * Self::ray_color(&Ray::new(&rec.p, &direction), depth - 1, world);
+            let mut scattered = Ray::default();
+            let mut attenuation = Color::default();
+            if rec
+                .material
+                .as_ref()
+                .unwrap()
+                .scatter(r, &rec, &mut attenuation, &mut scattered)
+            {
+                return attenuation * Self::ray_color(&scattered, depth - 1, world);
+            }
+            return Color::new(0.0, 0.0, 0.0);
         }
 
         let unit_direction = vec3::unit_vector(r.direction());

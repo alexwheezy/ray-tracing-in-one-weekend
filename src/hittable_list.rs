@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 #[derive(Default)]
 pub struct HittableList {
-    objects: Vec<Rc<dyn Hittable>>,
+    objects: Vec<Option<Rc<dyn Hittable>>>,
 }
 
 impl HittableList {
@@ -21,7 +21,7 @@ impl HittableList {
 
     #[inline]
     pub fn add(&mut self, object: Rc<dyn Hittable>) {
-        self.objects.push(object);
+        self.objects.push(Some(object));
     }
 
     #[inline]
@@ -37,10 +37,14 @@ impl Hittable for HittableList {
         let mut closest_so_far = ray_t.max;
 
         for object in &self.objects {
-            if object.hit(r, Interval::new(ray_t.min, closest_so_far), &mut temp_rec) {
+            if object.as_ref().unwrap().hit(
+                r,
+                Interval::new(ray_t.min, closest_so_far),
+                &mut temp_rec,
+            ) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
-                *rec = temp_rec;
+                *rec = temp_rec.clone();
             }
         }
         hit_anything
