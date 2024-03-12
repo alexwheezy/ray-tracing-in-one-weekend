@@ -63,6 +63,13 @@ impl Vec3 {
             rtweekend::random_double_range(min, max),
         )
     }
+
+    #[inline]
+    pub fn near_zero(&self) -> bool {
+        // Return true if the vector is close to zero in all dimensions.
+        let s = 1e-8;
+        self.x.abs() < s && self.y.abs() < s && self.z.abs() < s
+    }
 }
 
 impl Neg for Vec3 {
@@ -179,11 +186,11 @@ impl Div<f32> for Vec3 {
     }
 }
 
-pub fn dot(lhs: &Vec3, rhs: &Vec3) -> f32 {
+pub fn dot(lhs: Vec3, rhs: Vec3) -> f32 {
     lhs[0] * rhs[0] + lhs[1] * rhs[1] + lhs[2] * rhs[2]
 }
 
-pub fn cross(lhs: &Vec3, rhs: &Vec3) -> Vec3 {
+pub fn cross(lhs: Vec3, rhs: Vec3) -> Vec3 {
     Vec3::new(
         lhs[1] * rhs[2] - lhs[2] * rhs[1],
         lhs[2] * rhs[0] - lhs[0] * rhs[2],
@@ -191,10 +198,12 @@ pub fn cross(lhs: &Vec3, rhs: &Vec3) -> Vec3 {
     )
 }
 
+#[inline]
 pub fn unit_vector(v: &Vec3) -> Vec3 {
     *v / v.length()
 }
 
+#[inline]
 pub fn random_in_unit_sphere() -> Vec3 {
     loop {
         let p = Vec3::random_vector_range(-1.0, 1.0);
@@ -204,17 +213,24 @@ pub fn random_in_unit_sphere() -> Vec3 {
     }
 }
 
+#[inline]
 pub fn random_unit_vector() -> Vec3 {
     unit_vector(&random_in_unit_sphere())
 }
 
-pub fn random_on_hemisphere(normal: &Vec3) -> Vec3 {
+#[inline]
+pub fn random_on_hemisphere(normal: Vec3) -> Vec3 {
     let in_unit_sphere = random_unit_vector();
-    if dot(&in_unit_sphere, normal) > 0.0 {
+    if dot(in_unit_sphere, normal) > 0.0 {
         in_unit_sphere
     } else {
         -in_unit_sphere
     }
+}
+
+#[inline]
+pub fn reflect(v: Vec3, normal: Vec3) -> Vec3 {
+    v - 2.0 * dot(v, normal) * normal
 }
 
 #[cfg(test)]
@@ -287,21 +303,21 @@ mod tests {
     fn test_dot_vec() {
         let v1 = Vec3::new(1.0, 2.0, 3.0);
         let v2 = Vec3::new(4.0, 5.0, 6.0);
-        assert_eq!(dot(&v1, &v2), 32.0);
+        assert_eq!(dot(v1, v2), 32.0);
 
         let v1 = Vec3::new(-1.0, 0.0, -1.0);
         let v2 = Vec3::new(1.0, -2.0, 1.0);
-        assert_eq!(dot(&v1, &v2), -2.0);
+        assert_eq!(dot(v1, v2), -2.0);
     }
 
     #[test]
     fn test_cross_vec() {
         let v1 = Vec3::new(1.0, 2.0, 3.0);
         let v2 = Vec3::new(4.0, 5.0, 6.0);
-        assert_eq!(cross(&v1, &v2), Vec3::new(-3.0, 6.0, -3.0));
+        assert_eq!(cross(v1, v2), Vec3::new(-3.0, 6.0, -3.0));
 
         let v1 = Vec3::new(-1.0, 0.0, -1.0);
         let v2 = Vec3::new(1.0, -2.0, 1.0);
-        assert_eq!(cross(&v1, &v2), Vec3::new(-2.0, 0.0, 2.0));
+        assert_eq!(cross(v1, v2), Vec3::new(-2.0, 0.0, 2.0));
     }
 }
