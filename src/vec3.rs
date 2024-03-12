@@ -1,3 +1,5 @@
+#![allow(clippy::approx_constant)]
+
 use std::fmt::Display;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub};
 use std::ops::{Index, IndexMut};
@@ -200,6 +202,9 @@ pub fn cross(lhs: Vec3, rhs: Vec3) -> Vec3 {
 
 #[inline]
 pub fn unit_vector(v: &Vec3) -> Vec3 {
+    if v.length() <= 0.0 {
+        return Vec3::new(0.0, 0.0, 0.0);
+    }
     *v / v.length()
 }
 
@@ -231,6 +236,25 @@ pub fn random_on_hemisphere(normal: Vec3) -> Vec3 {
 #[inline]
 pub fn reflect(v: Vec3, normal: Vec3) -> Vec3 {
     v - 2.0 * dot(v, normal) * normal
+}
+
+#[inline]
+pub fn refract1(uv: Vec3, normal: Vec3, eta_over_eta: f32) -> Vec3 {
+    let cos_theta = dot(-uv, normal).min(1.0);
+    let r_out_perp = eta_over_eta * (uv + cos_theta * normal);
+    let r_out_parallel = -(1.0 - r_out_perp.length_squared()).abs().sqrt() * normal;
+    r_out_perp + r_out_parallel
+}
+
+#[inline]
+pub fn refract2(uv: Vec3, normal: Vec3, eta_over_eta: f32) -> Vec3 {
+    let cos_i = -dot(uv, normal);
+    let sin_t = eta_over_eta * eta_over_eta * (1.0 - cos_i * cos_i);
+    if sin_t > 1.0 {
+        return Vec3::new(0.0, 0.0, 0.0);
+    }
+    let cos_t = (1.0 - sin_t).sqrt();
+    eta_over_eta * uv + (eta_over_eta * cos_i - cos_t) * normal
 }
 
 #[cfg(test)]
@@ -315,9 +339,62 @@ mod tests {
         let v1 = Vec3::new(1.0, 2.0, 3.0);
         let v2 = Vec3::new(4.0, 5.0, 6.0);
         assert_eq!(cross(v1, v2), Vec3::new(-3.0, 6.0, -3.0));
+        assert_eq!(
+            cross(unit_vector(&v1), unit_vector(&v2)),
+            Vec3::new(-0.091371745, 0.18274346, -0.091371745)
+        );
 
         let v1 = Vec3::new(-1.0, 0.0, -1.0);
         let v2 = Vec3::new(1.0, -2.0, 1.0);
         assert_eq!(cross(v1, v2), Vec3::new(-2.0, 0.0, 2.0));
+        assert_eq!(
+            cross(unit_vector(&v1), unit_vector(&v2)),
+            Vec3::new(-0.57735026, 0.0, 0.57735026)
+        );
+    }
+
+    #[test]
+    fn test_reflected_vec() {
+        let uv = Vec3::new(0.0, 0.0, 0.0);
+        let normal = Vec3::new(0.0, 1.0, 0.0);
+        assert_eq!(reflect(uv, normal), Vec3::new(0.0, 0.0, 0.0));
+
+        let uv = Vec3::new(0.0, 1.0, 0.0);
+        let normal = Vec3::new(0.0, 1.0, 0.0);
+        assert_eq!(reflect(unit_vector(&uv), normal), Vec3::new(0.0, -1.0, 0.0));
+
+        let uv = Vec3::new(1.0, 1.0, 0.0);
+        let normal = Vec3::new(1.0, 0.0, 1.0);
+        assert_eq!(
+            reflect(unit_vector(&uv), normal),
+            Vec3::new(-0.70710677, 0.70710677, -1.4142135)
+        );
+
+        let uv = Vec3::new(0.5, 0.9, 0.6);
+        let normal = Vec3::new(1.0, 0.0, 1.0);
+        assert_eq!(
+            reflect(unit_vector(&uv), normal),
+            Vec3::new(-1.4266083, 0.7552632, -1.3426902)
+        );
+    }
+
+    #[test]
+    fn test_refracted1_vec() {
+        let uv = Vec3::new(0.8, 0.2, 0.3);
+        let normal = Vec3::new(0.7, 0.0, 0.3);
+        assert_eq!(
+            refract1(unit_vector(&uv), unit_vector(&normal), 1.5),
+            Vec3::new(-0.83501446, 0.34188172, -0.4311238),
+        );
+    }
+
+    #[test]
+    fn test_refracted2_vec() {
+        let uv = Vec3::new(0.8, 0.2, 0.3);
+        let normal = Vec3::new(0.7, 0.0, 0.3);
+        assert_eq!(
+            refract2(unit_vector(&uv), unit_vector(&normal), 1.5),
+            Vec3::new(-0.83501446, 0.34188172, -0.4311238),
+        );
     }
 }
