@@ -3,7 +3,7 @@
 use crate::color::Color;
 use crate::hittable::HitRecord;
 use crate::ray::Ray;
-use crate::vec3::{dot, random_in_unit_sphere, random_unit_vector, reflect, refract1, unit_vector};
+use crate::vec3;
 
 pub trait Material {
     fn scatter(
@@ -56,13 +56,13 @@ impl Material for Lambertian {
         attenuation: &mut Color,
         scattered: &mut Ray,
     ) -> bool {
-        let mut scatter_direction = rec.normal + random_in_unit_sphere();
+        let mut scatter_direction = rec.normal + vec3::random_unit_vector();
 
         // Catch degenerate scatter direction
         if scatter_direction.near_zero() {
             scatter_direction = rec.normal;
         }
-        *scattered = Ray::new(&rec.p, &scatter_direction);
+        *scattered = Ray::new(rec.p, scatter_direction);
         *attenuation = self.albedo;
         true
     }
@@ -76,10 +76,11 @@ impl Material for Metal {
         attenuation: &mut Color,
         scattered: &mut Ray,
     ) -> bool {
-        let reflected = reflect(unit_vector(r_in.direction()), rec.normal);
-        *scattered = Ray::new(&rec.p, &(reflected + self.fuzz * random_unit_vector()));
+        let reflected = vec3::reflect(vec3::unit_vector(*r_in.direction()), rec.normal);
+        *scattered = Ray::new(rec.p, reflected + self.fuzz * vec3::random_unit_vector());
         *attenuation = self.albedo;
-        dot(*scattered.direction(), rec.normal) > 0.0
+        // vec3::dot(*scattered.direction(), rec.normal) >= 0.0
+        true
     }
 }
 
@@ -97,9 +98,9 @@ impl Material for Dielectric {
         } else {
             self.ir
         };
-        let unit_direction = unit_vector(r_in.direction());
-        let refracted = refract1(unit_direction, rec.normal, refraction_ratio);
-        *scattered = Ray::new(&rec.p, &refracted);
+        let unit_direction = vec3::unit_vector(*r_in.direction());
+        let refracted = vec3::refract(unit_direction, rec.normal, refraction_ratio);
+        *scattered = Ray::new(rec.p, refracted);
         true
     }
 }
