@@ -12,8 +12,8 @@ fn main() {
 
     // Materials
     let material_ground = Rc::new(material::Lambertian::new(color::Color::new(0.8, 0.8, 0.0)));
-    let material_center = Rc::new(material::Dielectric::new(1.5));
-    let material_left = Rc::new(material::Dielectric::new(1.5));
+    let material_center = Rc::new(material::Lambertian::new(color::Color::new(0.7, 0.3, 0.3)));
+    let material_left = Rc::new(material::Metal::new(color::Color::new(0.8, 0.8, 0.8), 0.3));
     let material_right = Rc::new(material::Metal::new(color::Color::new(0.8, 0.6, 0.2), 1.0));
 
     world.add(Rc::new(hittable::Sphere::new(
@@ -42,15 +42,15 @@ fn main() {
 
     // Image
     // Ratio of image width over height
-    let aspect_ratio = 16.0 / 9.0;
+    const ASPECT_RATIO: f32 = 16.0 / 9.0;
     // Rendered image width in pixel count
-    let image_width = 400;
+    const IMAGE_WIDTH: i32 = 400;
     // Count of random samples for each pixel
-    let sample_per_pixel = 30;
+    const SAMPLE_PER_PIXEL: u32 = 30;
     // Maximum number of ray bounces into scene
-    let max_depth = 50;
+    const MAX_DEPTH: u32 = 50;
 
     // Render
-    let mut cam = camera::Camera::new(image_width, aspect_ratio, sample_per_pixel, max_depth);
+    let mut cam = camera::Camera::new(IMAGE_WIDTH, ASPECT_RATIO, SAMPLE_PER_PIXEL, MAX_DEPTH);
     cam.render(&world);
 }
