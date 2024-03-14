@@ -3,6 +3,7 @@
 use crate::color::Color;
 use crate::hittable::HitRecord;
 use crate::ray::Ray;
+use crate::rtweekend::random_double;
 use crate::vec3;
 
 pub trait Material {
@@ -32,6 +33,13 @@ pub struct Dielectric {
 impl Dielectric {
     pub fn new(ir: f32) -> Self {
         Self { ir }
+    }
+
+    pub fn reflectance(&self, cosine: f32, ref_idx: f32) -> f32 {
+        // Use Schlick's approximation for reflectance
+        let mut r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+        r0 = r0 * r0;
+        r0 + (1.0 - r0) * f32::powf(1.0 - cosine, 5.0)
     }
 }
 
@@ -99,8 +107,18 @@ impl Material for Dielectric {
             self.ir
         };
         let unit_direction = vec3::unit_vector(*r_in.direction());
-        let refracted = vec3::refract(unit_direction, rec.normal, refraction_ratio);
-        *scattered = Ray::new(rec.p, refracted);
+        let cos_theta = vec3::dot(-unit_direction, rec.normal).min(1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+
+        let direction = if refraction_ratio * sin_theta > 1.0
+            || self.reflectance(cos_theta, refraction_ratio) > random_double()
+        {
+            vec3::reflect(unit_direction, rec.normal)
+        } else {
+            vec3::refract(unit_direction, rec.normal, refraction_ratio)
+        };
+
+        *scattered = Ray::new(rec.p, direction);
         true
     }
 }

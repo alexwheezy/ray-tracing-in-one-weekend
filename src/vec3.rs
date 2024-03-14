@@ -4,7 +4,7 @@ use std::fmt::Display;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub};
 use std::ops::{Index, IndexMut};
 
-use crate::rtweekend;
+use crate::rtweekend::{self, random_double_range};
 
 // Point3 is just an alias for vec3, but useful for geometric clarity in the code.
 pub type Point3 = Vec3;
@@ -203,6 +203,19 @@ pub fn random_in_unit_sphere() -> Vec3 {
             return p;
         }
     }
+}
+
+#[inline]
+pub fn random_in_unit_disk() -> Vec3 {
+    let p = Vec3::new(
+        random_double_range(-1.0, 1.0),
+        random_double_range(-1.0, 1.0),
+        0.0,
+    );
+    if p.length_squared() < 1.0 {
+        return p;
+    }
+    random_in_unit_disk()
 }
 
 #[inline]
