@@ -1,5 +1,9 @@
 use ray_tracing_in_one_weekend::{
-    camera, color, hittable, hittable_list::HittableList, material, rtweekend, vec3::Point3,
+    camera, color, hittable,
+    hittable_list::HittableList,
+    material::{Dielectric, Lambertian, MaterialType, Metal},
+    rtweekend,
+    vec3::Point3,
     vec3::Vec3,
 };
 
@@ -8,11 +12,12 @@ use std::rc::Rc;
 fn generate_scene() -> HittableList {
     let mut world = HittableList::new();
 
-    let ground_material = Rc::new(material::Lambertian::new(color::Color::new(0.5, 0.5, 0.5)));
+    let ground_material =
+        MaterialType::Lambertian(Lambertian::new(color::Color::new(0.5, 0.5, 0.5)));
     world.add(Rc::new(hittable::Sphere::new(
         Point3::new(0.0, -1000.0, 0.0),
         1000.0,
-        Some(ground_material),
+        ground_material,
     )));
 
     for a in -20..20 {
@@ -28,54 +33,42 @@ fn generate_scene() -> HittableList {
                 if choose_mat < 0.8 {
                     // Diffuse
                     let albedo = Vec3::random_vector() * Vec3::random_vector();
-                    let sphere_material = Rc::new(material::Lambertian::new(albedo));
-                    world.add(Rc::new(hittable::Sphere::new(
-                        center,
-                        0.2,
-                        Some(sphere_material),
-                    )));
-                } else if choose_mat > 0.6 {
+                    let sphere_material = MaterialType::Lambertian(Lambertian::new(albedo));
+                    world.add(Rc::new(hittable::Sphere::new(center, 0.2, sphere_material)));
+                } else if choose_mat < 0.9 {
                     // Metal
                     let albedo = Vec3::random_vector_range(0.5, 1.0);
                     let fuzz = rtweekend::random_double_range(0.0, 0.5);
-                    let sphere_material = Rc::new(material::Metal::new(albedo, fuzz));
-                    world.add(Rc::new(hittable::Sphere::new(
-                        center,
-                        0.2,
-                        Some(sphere_material),
-                    )));
+                    let sphere_material = MaterialType::Metal(Metal::new(albedo, fuzz));
+                    world.add(Rc::new(hittable::Sphere::new(center, 0.2, sphere_material)));
                 } else {
                     // Glass
-                    let sphere_material = Rc::new(material::Dielectric::new(1.5));
-                    world.add(Rc::new(hittable::Sphere::new(
-                        center,
-                        0.2,
-                        Some(sphere_material),
-                    )));
+                    let sphere_material = MaterialType::Dielectric(Dielectric::new(1.5));
+                    world.add(Rc::new(hittable::Sphere::new(center, 0.2, sphere_material)));
                 }
             }
         }
     }
 
-    let material1 = Rc::new(material::Dielectric::new(1.5));
+    let material1 = MaterialType::Dielectric(Dielectric::new(1.5));
     world.add(Rc::new(hittable::Sphere::new(
         Point3::new(0.0, 1.0, 0.0),
         1.0,
-        Some(material1),
+        material1,
     )));
 
-    let material2 = Rc::new(material::Lambertian::new(color::Color::new(0.4, 0.2, 0.1)));
+    let material2 = MaterialType::Lambertian(Lambertian::new(color::Color::new(0.4, 0.2, 0.1)));
     world.add(Rc::new(hittable::Sphere::new(
         Point3::new(-4.0, 1.0, 0.0),
         1.0,
-        Some(material2),
+        material2,
     )));
 
-    let material3 = Rc::new(material::Metal::new(color::Color::new(0.7, 0.6, 0.5), 0.0));
+    let material3 = MaterialType::Metal(Metal::new(color::Color::new(0.7, 0.6, 0.5), 0.0));
     world.add(Rc::new(hittable::Sphere::new(
         Point3::new(4.0, 1.0, 0.0),
         1.0,
-        Some(material3),
+        material3,
     )));
 
     world
@@ -93,7 +86,7 @@ fn main() {
     // Rendered image width in pixel count
     const IMAGE_WIDTH: i32 = 400;
     // Count of random samples for each pixel
-    const SAMPLE_PER_PIXEL: u32 = 50;
+    const SAMPLE_PER_PIXEL: u32 = 10;
     // Maximum number of ray bounces into scene
     const MAX_DEPTH: u32 = 50;
 

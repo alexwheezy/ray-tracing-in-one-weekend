@@ -1,6 +1,6 @@
 use crate::{
     interval::Interval,
-    material::Material,
+    material::MaterialType,
     ray::Ray,
     vec3::{self, Point3, Vec3},
 };
@@ -16,7 +16,7 @@ pub struct HitRecord {
     pub normal: Vec3,
     pub t: f32,
     pub front_face: bool,
-    pub material: Option<Rc<dyn Material>>,
+    pub material: Option<Rc<MaterialType>>,
 }
 
 impl HitRecord {
@@ -38,15 +38,15 @@ impl HitRecord {
 pub struct Sphere {
     center: Point3,
     radius: f32,
-    material: Option<Rc<dyn Material>>,
+    material: Option<Rc<MaterialType>>,
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f32, material: Option<Rc<dyn Material>>) -> Self {
+    pub fn new(center: Point3, radius: f32, material: MaterialType) -> Self {
         Self {
             center,
             radius,
-            material,
+            material: Some(Rc::new(material)),
         }
     }
 }

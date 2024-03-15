@@ -16,6 +16,12 @@ pub trait Material {
     ) -> bool;
 }
 
+pub enum MaterialType {
+    Lambertian(Lambertian),
+    Metal(Metal),
+    Dielectric(Dielectric),
+}
+
 pub struct Lambertian {
     albedo: Color,
 }
@@ -56,7 +62,7 @@ impl Metal {
     }
 }
 
-impl Material for Lambertian {
+impl Material for MaterialType {
     fn scatter(
         &self,
         r_in: &Ray,
@@ -64,61 +70,52 @@ impl Material for Lambertian {
         attenuation: &mut Color,
         scattered: &mut Ray,
     ) -> bool {
-        let mut scatter_direction = rec.normal + vec3::random_unit_vector();
+        match self {
+            MaterialType::Lambertian(material) => {
+                let mut scatter_direction = rec.normal + vec3::random_unit_vector();
 
-        // Catch degenerate scatter direction
-        if scatter_direction.near_zero() {
-            scatter_direction = rec.normal;
+                // Catch degenerate scatter direction
+                if scatter_direction.near_zero() {
+                    scatter_direction = rec.normal;
+                }
+                *scattered = Ray::new(rec.p, scatter_direction);
+                *attenuation = material.albedo;
+                true
+            }
+
+            MaterialType::Metal(material) => {
+                let reflected = vec3::reflect(vec3::unit_vector(*r_in.direction()), rec.normal);
+                *scattered = Ray::new(
+                    rec.p,
+                    reflected + material.fuzz * vec3::random_unit_vector(),
+                );
+                *attenuation = material.albedo;
+                // vec3::dot(*scattered.direction(), rec.normal) >= 0.0
+                true
+            }
+
+            MaterialType::Dielectric(material) => {
+                *attenuation = Color::new(1.0, 1.0, 1.0);
+                let refraction_ratio = if rec.front_face {
+                    1.0 / material.ir
+                } else {
+                    material.ir
+                };
+                let unit_direction = vec3::unit_vector(*r_in.direction());
+                let cos_theta = vec3::dot(-unit_direction, rec.normal).min(1.0);
+                let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+
+                let direction = if refraction_ratio * sin_theta > 1.0
+                    || material.reflectance(cos_theta, refraction_ratio) > random_double()
+                {
+                    vec3::reflect(unit_direction, rec.normal)
+                } else {
+                    vec3::refract(unit_direction, rec.normal, refraction_ratio)
+                };
+
+                *scattered = Ray::new(rec.p, direction);
+                true
+            }
         }
-        *scattered = Ray::new(rec.p, scatter_direction);
-        *attenuation = self.albedo;
-        true
-    }
-}
-
-impl Material for Metal {
-    fn scatter(
-        &self,
-        r_in: &Ray,
-        rec: &HitRecord,
-        attenuation: &mut Color,
-        scattered: &mut Ray,
-    ) -> bool {
-        let reflected = vec3::reflect(vec3::unit_vector(*r_in.direction()), rec.normal);
-        *scattered = Ray::new(rec.p, reflected + self.fuzz * vec3::random_unit_vector());
-        *attenuation = self.albedo;
-        // vec3::dot(*scattered.direction(), rec.normal) >= 0.0
-        true
-    }
-}
-
-impl Material for Dielectric {
-    fn scatter(
-        &self,
-        r_in: &Ray,
-        rec: &HitRecord,
-        attenuation: &mut Color,
-        scattered: &mut Ray,
-    ) -> bool {
-        *attenuation = Color::new(1.0, 1.0, 1.0);
-        let refraction_ratio = if rec.front_face {
-            1.0 / self.ir
-        } else {
-            self.ir
-        };
-        let unit_direction = vec3::unit_vector(*r_in.direction());
-        let cos_theta = vec3::dot(-unit_direction, rec.normal).min(1.0);
-        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
-
-        let direction = if refraction_ratio * sin_theta > 1.0
-            || self.reflectance(cos_theta, refraction_ratio) > random_double()
-        {
-            vec3::reflect(unit_direction, rec.normal)
-        } else {
-            vec3::refract(unit_direction, rec.normal, refraction_ratio)
-        };
-
-        *scattered = Ray::new(rec.p, direction);
-        true
     }
 }

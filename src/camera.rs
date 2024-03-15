@@ -4,6 +4,7 @@ use crate::{
     color::{self, Color},
     hittable::{HitRecord, Hittable},
     interval::Interval,
+    material::Material,
     ray::Ray,
     rtweekend::{degrees_to_radians, random_double},
     vec3::{self, random_in_unit_disk, Point3, Vec3},
