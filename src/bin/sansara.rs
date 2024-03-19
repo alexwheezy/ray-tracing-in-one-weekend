@@ -2,7 +2,7 @@ use ray_tracing_in_one_weekend::{
     camera, color, hittable,
     hittable_list::HittableList,
     material::{Dielectric, Lambertian, MaterialType, Metal},
-    rtweekend,
+    render, rtweekend,
     vec3::Point3,
     vec3::Vec3,
 };
@@ -84,9 +84,9 @@ fn main() {
     // Ratio of image width over height
     const ASPECT_RATIO: f32 = 16.0 / 9.0;
     // Rendered image width in pixel count
-    const IMAGE_WIDTH: i32 = 400;
+    const IMAGE_WIDTH: i32 = 1280;
     // Count of random samples for each pixel
-    const SAMPLE_PER_PIXEL: u32 = 10;
+    const SAMPLE_PER_PIXEL: u32 = 30;
     // Maximum number of ray bounces into scene
     const MAX_DEPTH: u32 = 50;
 
@@ -97,19 +97,15 @@ fn main() {
     let defocus_angle = 0.6;
     let focus_distance = 10.0;
 
-    // Render
-    let mut cam = camera::Camera::new(
-        IMAGE_WIDTH,
-        ASPECT_RATIO,
-        SAMPLE_PER_PIXEL,
-        MAX_DEPTH,
-        VFOV,
-        look_from,
-        look_at,
-        vup,
-        defocus_angle,
-        focus_distance,
-    );
+    // Camera
+    let image = camera::Image::with_width(IMAGE_WIDTH);
+    let camera_settings =
+        camera::CameraSettings::new(ASPECT_RATIO, VFOV, defocus_angle, focus_distance);
+    let transform = camera::Xform::new(look_from, look_at, vup);
+    let camera = camera::Camera::new(image, transform, camera_settings);
 
-    cam.render(&world);
+    // Render
+    let render_settings = render::RenderSettings::new(SAMPLE_PER_PIXEL, MAX_DEPTH);
+    let mut tracing = render::Render::new(render_settings, camera);
+    tracing.render(&world);
 }
