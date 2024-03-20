@@ -2,11 +2,11 @@ use crate::hittable::{HitRecord, Hittable, Sphere};
 use crate::interval::Interval;
 use crate::ray::Ray;
 
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Default)]
 pub struct HittableList {
-    objects: Vec<Rc<Sphere>>,
+    objects: Vec<Arc<Sphere>>,
 }
 
 impl HittableList {
@@ -15,12 +15,12 @@ impl HittableList {
     }
 
     #[inline]
-    pub fn with_object(&mut self, object: Rc<Sphere>) {
+    pub fn with_object(&mut self, object: Arc<Sphere>) {
         self.add(object);
     }
 
     #[inline]
-    pub fn add(&mut self, object: Rc<Sphere>) {
+    pub fn add(&mut self, object: Arc<Sphere>) {
         self.objects.push(object);
     }
 

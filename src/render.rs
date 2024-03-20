@@ -10,6 +10,7 @@ use crate::{
     vec3::{self, random_in_unit_disk, Point3, Vec3},
 };
 use log::info;
+use rayon::prelude::*;
 
 pub struct RenderSettings {
     sample_per_pixel: u32,
@@ -86,11 +87,13 @@ impl Render {
         for j in 0..image.height {
             info!("Scanlines remaining: {}", image.height - j);
             for i in 0..image.width {
-                let mut pixel_color = Color::default();
-                for _ in 0..self.settings.sample_per_pixel {
-                    let ray = self.get_ray(i, j);
-                    pixel_color += Self::ray_color(&ray, self.settings.max_depth, world);
-                }
+                let pixel_color = (0..self.settings.sample_per_pixel)
+                    .into_par_iter()
+                    .fold(Color::default, |acc_color, _| {
+                        let ray = self.get_ray(i, j);
+                        acc_color + Self::ray_color(&ray, self.settings.max_depth, world)
+                    })
+                    .reduce(Color::default, |acc_color, color| acc_color + color);
                 color::write_color(
                     &mut std::io::stdout(),
                     pixel_color,

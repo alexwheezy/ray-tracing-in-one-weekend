@@ -1,6 +1,7 @@
 #![allow(clippy::too_many_arguments)]
 use crate::vec3::{Point3, Vec3};
 
+#[derive(Clone, Copy)]
 pub struct Image {
     pub width: i32,
     pub height: i32,
@@ -48,6 +49,7 @@ impl Xform {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct CameraSettings {
     pub aspect_ratio: f32,
     pub vfov: f32,
